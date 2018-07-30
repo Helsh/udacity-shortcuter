@@ -44,7 +44,9 @@
 import http.server
 import requests
 import os
+import threading
 from urllib.parse import unquote, parse_qs
+from socketserver import ThreadingMixIn
 
 memory = {}
 
@@ -133,8 +135,11 @@ class Shortener(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write("Not found. Can't fetch URI: {}".format(longuri).encode())
 
+class ThreadHTTPServer(ThreadingMixIn, http.server.HTTPServer):
+    "This is an HTTPServer that supports thread-based concurrency."
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8000))   # Use PORT if it's there.
+    port = int(os.environ.get('PORT', 8000))
     server_address = ('', port)
-    httpd = http.server.HTTPServer(server_address, Shortener)
+    httpd = ThreadHTTPServer(server_address, Shortener)
     httpd.serve_forever()
